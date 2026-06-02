@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>UITAX - Liked</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    :root { --bg: #f5f5f5; --bg-card: #ffffff; --bg-dark: #09090b; --bg-card-dark: #18181b; --text: #18181b; --text-dark: #f5f5f5; --border: #e4e4e7; --border-dark: #27272a; --text-muted: #71717a; --text-muted-dark: #a1a1aa; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background: var(--bg); color: var(--text); transition: 0.4s; min-height: 100vh; }
+    body.dark { background: var(--bg-dark); color: var(--text-dark); }
+    .container { max-width: 448px; margin: 0 auto; min-height: 100vh; background: var(--bg); transition: 0.4s; }
+    body.dark .container { background: var(--bg-dark); }
+    
+    .header { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--border); transition: 0.4s; }
+    body.dark .header { border-color: var(--border-dark); }
+    .back-btn { background: none; border: none; cursor: pointer; padding: 4px; display: flex; align-items: center; justify-content: center; }
+    .back-btn svg { width: 24px; height: 24px; stroke: var(--text); stroke-width: 2; }
+    body.dark .back-btn svg { stroke: var(--text-dark); }
+    .page-title { font-size: 18px; font-weight: 600; }
+    
+    .grid { padding: 16px; display: flex; flex-direction: column; gap: 16px; padding-bottom: 80px; }
+    .loading { text-align: center; padding: 40px 20px; color: var(--text-muted); }
+    body.dark .loading { color: var(--text-muted-dark); }
+    .card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: 0.4s; }
+    body.dark .card { background: var(--bg-card-dark); border-color: var(--border-dark); }
+    .card-preview { background: #000; display: flex; align-items: center; justify-content: center; padding: 16px; border-bottom: 1px solid var(--border); transition: 0.4s; min-height: 140px; max-height: 300px; }
+    body.dark .card-preview { background: #000; border-color: var(--border-dark); }
+    .card-preview iframe { width: 100%; height: auto; min-height: 100px; border: 0; background: transparent; }
+    .card-body { padding: 12px; }
+    .ad-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; transition: 0.4s; position: relative; }
+    body.dark .ad-card { background: var(--bg-card-dark); border-color: var(--border-dark); }
+    .ad-badge { position: absolute; top: 12px; left: 12px; background: #fbbf24; color: #000; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 4px; z-index: 2; text-transform: uppercase; }
+    .ad-content { padding: 20px; text-align: center; min-height: 200px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; }
+    .ad-title { font-size: 16px; font-weight: 600; }
+    .ad-desc { font-size: 13px; color: var(--text-muted); max-width: 280px; }
+    body.dark .ad-desc { color: var(--text-muted-dark); }
+    .ad-btn { margin-top: 8px; padding: 10px 20px; background: #3b82f6; color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: 500; cursor: pointer; transition: 0.2s; }
+    .card-header { display: flex; align-items: start; justify-content: space-between; margin-bottom: 8px; }
+    .card-info { flex: 1; min-width: 0; margin-right: 8px; }
+    .card-title { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-author { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+    body.dark .card-author { color: var(--text-muted-dark); }
+    .code-btn { font-size: 12px; background: var(--border); border: 1px solid #d4d4d8; padding: 6px 12px; border-radius: 8px; cursor: pointer; flex-shrink: 0; transition: 0.2s; color: var(--text); }
+    body.dark .code-btn { background: #27272a; border-color: #3f3f46; color: var(--text-dark); }
+    .card-footer { display: flex; align-items: center; justify-content: space-between; }
+    .tags { display: flex; gap: 6px; flex-wrap: wrap; }
+    .tag { font-size: 11px; background: var(--border); color: var(--text-muted); padding: 2px 8px; border-radius: 4px; border: 1px solid #d4d4d8; }
+    body.dark .tag { background: #27272a; color: var(--text-muted-dark); border-color: #3f3f46; }
+    .like-btn { display: flex; align-items: center; gap: 4px; font-size: 12px; color: var(--text-muted); background: none; border: none; cursor: pointer; flex-shrink: 0; transition: 0.2s; }
+    body.dark .like-btn { color: var(--text-muted-dark); }
+    .like-btn svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; }
+    .like-btn.liked { color: #ef4444; }
+    .like-btn.liked svg { fill: currentColor; }
+    
+    /* YOUR EXACT MODAL CSS */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(8px);
+      z-index: 100;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 900px;
+      height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    body.dark .modal-content {
+      background: var(--bg-card-dark);
+      border-color: var(--border-dark);
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    body.dark .modal-header {
+      border-color: var(--border-dark);
+    }
+
+    .modal-title {
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      cursor: pointer;
+      color: var(--text-muted);
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      transition: 0.2s;
+      line-height: 1;
+    }
+
+    .modal-close:hover {
+      background: var(--border);
+      color: var(--text);
+    }
+
+    body.dark .modal-close:hover {
+      background: #27272a;
+      color: var(--text-dark);
+    }
+
+    .modal-tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      padding: 0 20px;
+      gap: 4px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+    }
+
+    body.dark .modal-tabs {
+      border-color: var(--border-dark);
+      background: var(--bg-card-dark);
+    }
+
+    .modal-tab {
+      padding: 12px 16px;
+      background: none;
+      border: none;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: 0.2s;
+    }
+
+    body.dark .modal-tab {
+      color: var(--text-muted-dark);
+    }
+
+    .modal-tab.active {
+      color: #3b82f6;
+      border-bottom-color: #3b82f6;
+    }
+
+    .modal-body {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      background: var(--bg);
+    }
+
+    body.dark .modal-body {
+      background: var(--bg-dark);
+    }
+
+    .code-panel {
+      display: none;
+      position: absolute;
+      inset: 0;
+    }
+
+    .code-panel.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 8px 14px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.2s;
+      color: var(--text);
+      z-index: 10;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    body.dark .copy-btn {
+      background: var(--bg-card-dark);
+      border-color: var(--border-dark);
+      color: var(--text-dark);
+    }
+
+    .copy-btn:hover {
+      background: var(--border);
+      transform: translateY(-1px);
+    }
+
+    body.dark .copy-btn:hover {
+      background: #27272a;
+    }
+
+    .copy-btn.copied {
+      background: #10b981;
+      color: white;
+      border-color: #10b981;
+    }
+
+    .code-wrapper {
+      flex: 1;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* Custom scrollbar */
+    .code-wrapper::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    .code-wrapper::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .code-wrapper::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 5px;
+    }
+
+    body.dark .code-wrapper::-webkit-scrollbar-thumb {
+      background: #3f3f46;
+    }
+
+    .code-wrapper::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+
+    .code-block {
+      margin: 0;
+      font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text);
+      white-space: pre;
+      word-wrap: normal;
+    }
+
+    body.dark .code-block {
+      color: #e5e7eb;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <button class="back-btn" onclick="window.location.href='main.html'">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M19 12H5M12 19l-7-7 7-7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <h1 class="page-title">Liked Components</h1>
+    </header>
+    
+    <div class="grid" id="grid">
+      <div class="loading">Loading components...</div>
+    </div>
+  </div>
+
+  <!-- Full Screen Code Modal -->
+  <div id="code-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 class="modal-title" id="modal-title">Component Code</h2>
+        <button class="modal-close" id="modal-close">×</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab active" data-tab="html">HTML</button>
+        <button class="modal-tab" data-tab="css">CSS</button>
+      </div>
+      <div class="modal-body">
+        <div class="code-panel active" data-panel="html">
+          <button class="copy-btn" data-copy="html">Copy</button>
+          <div class="code-wrapper">
+            <pre class="code-block" id="code-html"></pre>
+          </div>
+        </div>
+        <div class="code-panel" data-panel="css">
+          <button class="copy-btn" data-copy="css">Copy</button>
+          <div class="code-wrapper">
+            <pre class="code-block" id="code-css"></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let allComponents = [];
+    let likedComponents = JSON.parse(localStorage.getItem('likes') || '[]');
+    let currentComponent = null;
+
+    if (localStorage.getItem('theme') === 'dark') {
+      document.body.classList.add('dark');
+    }
+
+    async function loadAllComponents() {
+      let i = 1;
+      let allData = [];
+      
+      while (true) {
+        try {
+          const res = await fetch(`components${i}.json`);
+          if (!res.ok) break;
+          const data = await res.json();
+          allData = allData.concat(data);
+          i++;
+        } catch (e) {
+          break;
+        }
+      }
+      
+      if (allData.length === 0) {
+        document.getElementById('grid').innerHTML = '<div class="loading">No components found</div>';
+        return;
+      }
+      
+      allComponents = allData;
+      renderCards();
+    }
+
+    loadAllComponents();
+
+    function renderCards() {
+      const grid = document.getElementById('grid');
+      
+      const likedIds = likedComponents.map(id => String(id));
+      const filtered = allComponents.filter(c => likedIds.includes(String(c.id)));
+
+      if (filtered.length === 0) {
+        grid.innerHTML = '<div class="loading">No liked components yet.<br>Go back and like some!</div>';
+        return;
+      }
+
+      let html = '';
+      filtered.forEach((comp, index) => {
+        html += `
+          <div class="card" data-id="${comp.id}">
+            <div class="card-preview">
+              <iframe 
+  srcdoc="<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;padding:16px}</style>${comp.preview.replace(/"/g, '&quot;')}" 
+  sandbox="allow-scripts"
+  scrolling="no"
+></iframe>
+            </div>
+            <div class="card-body">
+              <div class="card-header">
+                <div class="card-info">
+                  <h3 class="card-title">${comp.title}</h3>
+                  <p class="card-author">${comp.author}</p>
+                </div>
+                <button class="code-btn" data-id="${comp.id}">Code</button>
+              </div>
+              <div class="card-footer">
+                <div class="tags">
+                  ${comp.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+                </div>
+                <button class="like-btn liked" data-id="${comp.id}">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 0 0 0 0-7.78z"></path>
+                  </svg>
+                  <span>${comp.likes + 1}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+
+        if ((index + 1) % 3 === 0 && index !== filtered.length - 1) {
+          html += `
+            <div class="ad-card">
+              <span class="ad-badge">Ad</span>
+              <div class="ad-content">
+                <div class="ad-title">🚀 Boost Your UI</div>
+                <div class="ad-desc">Get  components and templates. Build faster with UITAX Open source ui library</div>
+                <button class="ad-btn" onclick="window.open('https://example.com', '_blank')">Learn More</button>
+              </div>
+            </div>
+          `;
+        }
+      });
+
+      grid.innerHTML = html;
+      attachCardEvents();
+    }
+
+    function attachCardEvents() {
+      document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = String(btn.dataset.id);
+          const index = likedComponents.findIndex(lid => String(lid) === id);
+          if (index > -1) {
+            likedComponents.splice(index, 1);
+          }
+          localStorage.setItem('likes', JSON.stringify(likedComponents));
+          renderCards();
+        };
+      });
+
+      document.querySelectorAll('.code-btn').forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          const id = btn.dataset.id;
+          openCodeModal(Number(id));
+        };
+      });
+    }
+
+    // CODE MODAL - FULL SCREEN WITH HTML/CSS TABS - YOUR EXACT JS
+    const modal = document.getElementById('code-modal');
+    const modalClose = document.getElementById('modal-close');
+    const modalTitle = document.getElementById('modal-title');
+    const codeHtml = document.getElementById('code-html');
+    const codeCss = document.getElementById('code-css');
+
+    function openCodeModal(id) {
+      currentComponent = allComponents.find(c => c.id === id);
+      if (!currentComponent) return;
+
+      modalTitle.textContent = currentComponent.title;
+      codeHtml.textContent = currentComponent.html || '<!-- No HTML provided -->';
+      codeCss.textContent = currentComponent.css || '/* No CSS provided */';
+      
+      modal.classList.add('show');
+      document.body.style.overflow = 'hidden'; // Lock background scroll
+    }
+
+    modalClose.onclick = () => {
+      modal.classList.remove('show');
+      document.body.style.overflow = ''; // Unlock background scroll
+    };
+
+    modal.onclick = (e) => {
+      if (e.target === modal) {
+        modal.classList.remove('show');
+        document.body.style.overflow = ''; // Unlock background scroll
+      }
+    };
+
+    // ESC to close modal
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('show')) {
+        modal.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+
+    // TAB SWITCHING
+    document.querySelectorAll('.modal-tab').forEach(tab => {
+      tab.onclick = () => {
+        document.querySelectorAll('.modal-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.querySelector(`[data-panel="${tab.dataset.tab}"]`).classList.add('active');
+      };
+    });
+
+    // COPY CODE
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.onclick = () => {
+        const type = btn.dataset.copy;
+        const code = type === 'html' ? currentComponent.html : currentComponent.css;
+        navigator.clipboard.writeText(code || '');
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(() => {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 1500);
+      };
+    });
+  </script>
+</body>
+</html>
